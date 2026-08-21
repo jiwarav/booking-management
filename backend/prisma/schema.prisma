@@ -21,7 +21,7 @@ enum BookingStatus {
 
 model Service {
   id       Int       @id @default(autoincrement())
-  name     String
+  name     String    @unique
   duration Int
   bookings Booking[]
 }
