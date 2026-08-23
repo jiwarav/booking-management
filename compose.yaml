@@ -3,14 +3,64 @@ services:
     image: postgres:17
     container_name: booking-management-db
     restart: unless-stopped
+
     environment:
       POSTGRES_USER: booking
       POSTGRES_PASSWORD: booking_dev
       POSTGRES_DB: booking_management
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U booking -d booking_management",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: booking-management-backend
+
+    restart: unless-stopped
+
+    environment:
+      DATABASE_URL: postgresql://booking:booking_dev@postgres:5432/booking_management?schema=public
+      PORT: 3000
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: booking-management-frontend
+
+    restart: unless-stopped
+
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+
+    ports:
+      - "3001:3000"
+
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
