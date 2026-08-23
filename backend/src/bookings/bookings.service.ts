@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingStatus } from '../../generated/prisma/enums';
+import { FindBookingsDto } from './dto/find-bookings.dto';
 
 @Injectable()
 export class BookingsService {
@@ -69,8 +70,16 @@ export class BookingsService {
     });
   }
 
-  findAll() {
+  findAll(query: FindBookingsDto) {
     return this.prisma.booking.findMany({
+      where: {
+        ...(query.status && {
+          status: query.status,
+        }),
+        ...(query.serviceId && {
+          serviceId: query.serviceId,
+        }),
+      },
       orderBy: {
         startTime: 'asc',
       },
