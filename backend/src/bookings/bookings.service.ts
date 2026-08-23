@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BookingStatus } from '../../generated/prisma/enums';
 
 @Injectable()
 export class BookingsService {
@@ -88,5 +89,39 @@ export class BookingsService {
     }
 
     return booking;
+  }
+
+  private readonly allowedTransitions: Record<BookingStatus, BookingStatus[]> =
+    {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+  async update(id: string, status: BookingStatus) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking with ID ${id} not found`);
+    }
+
+    if (!this.allowedTransitions[booking.status].includes(status)) {
+      throw new BadRequestException(
+        `Cannot change booking status from ${booking.status} to ${status}`,
+      );
+    }
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: {
+        status,
+      },
+      include: {
+        service: true,
+      },
+    });
   }
 }
