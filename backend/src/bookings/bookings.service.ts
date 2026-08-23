@@ -70,23 +70,44 @@ export class BookingsService {
     });
   }
 
-  findAll(query: FindBookingsDto) {
-    return this.prisma.booking.findMany({
-      where: {
-        ...(query.status && {
-          status: query.status,
-        }),
-        ...(query.serviceId && {
-          serviceId: query.serviceId,
-        }),
+  async findAll(query: FindBookingsDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = {
+      ...(query.status && {
+        status: query.status,
+      }),
+      ...(query.serviceId && {
+        serviceId: query.serviceId,
+      }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          startTime: 'asc',
+        },
+        include: {
+          service: true,
+        },
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        startTime: 'asc',
-      },
-      include: {
-        service: true,
-      },
-    });
+    };
   }
 
   async findOne(id: string) {
