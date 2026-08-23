@@ -16,6 +16,10 @@ export class BookingsService {
     serviceId: number;
     startTime: Date;
   }) {
+    if (data.startTime <= new Date()) {
+      throw new BadRequestException('Booking time must be in the future');
+    }
+
     const service = await this.prisma.service.findUnique({
       where: { id: data.serviceId },
     });
