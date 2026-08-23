@@ -46,7 +46,7 @@ A full-stack booking management system for staff to create bookings, view schedu
 * Continuous integration with GitHub Actions
 
 ## Project Structure
-
+ ```
 booking-management/
 ├── backend/
 │   ├── prisma/
